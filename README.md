@@ -9,7 +9,7 @@ Es un único archivo HTML (`tp-redes-interactivo.html`), sin dependencias ni ins
 Si este repo tiene GitHub Pages activado, entrás directo desde:
 
 ```
-https://<usuario-o-org>.github.io/<nombre-del-repo>/tp-redes-interactivo.html
+https://martinianogalarce.github.io/Tp-Redes/tp-redes-interactivo.html
 ```
 
 **¿Cómo se activa GitHub Pages?** (lo hace cualquiera de los del grupo, una sola vez)

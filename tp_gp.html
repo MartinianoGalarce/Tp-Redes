@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programación sobre Redes — Laboratorio interactivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12181f;
+    --panel:#1b2430;
+    --panel-hi:#212c3a;
+    --line:#2a3542;
+    --amber:#e8a33d;
+    --amber-dim:#4a3d24;
+    --teal:#6fb8c4;
+    --red:#e6685f;
+    --text:#edeef0;
+    --muted:#8b95a1;
+    --muted-2:#5c6673;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 8%, #1a2330 0%, transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    padding:48px 24px 80px;
+  }
+  .wrap{max-width:1040px;margin:0 auto;}
+
+  header{margin-bottom:56px;}
+  .eyebrow-line{
+    display:flex;align-items:center;gap:12px;
+    color:var(--muted-2);font-family:'JetBrains Mono',monospace;
+    font-size:13px;margin-bottom:18px;
+  }
+  .eyebrow-line .dot{width:6px;height:6px;background:var(--amber);border-radius:50%;}
+  .eyebrow-line .rule{flex:1;height:1px;background:var(--line);}
+  h1{
+    font-size:clamp(28px,4vw,42px);
+    font-weight:700;
+    line-height:1.15;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  .lede{
+    color:var(--muted);
+    font-size:16px;
+    max-width:66ch;
+    line-height:1.6;
+  }
+
+  section{margin-bottom:64px;}
+  .section-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid var(--line);
+    padding-bottom:14px;margin-bottom:20px;
+    flex-wrap:wrap;gap:8px;
+  }
+  .section-head h2{font-size:20px;font-weight:600;margin:0;}
+  .section-head .tag{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted-2);}
+
+  button{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--line);
+    padding:9px 16px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  select{
+    background:#0a0e13;color:var(--text);border:1px solid var(--line);border-radius:4px;
+    padding:8px 9px;font-family:'JetBrains Mono',monospace;font-size:12px;
+  }
+  select:focus{outline:none;border-color:var(--amber);}
+  button.primary{border-color:var(--amber);color:var(--amber);}
+  button:hover{background:var(--panel-hi);}
+  button:disabled{opacity:.35;cursor:not-allowed;}
+
+  /* ============ LABORATORIO ============ */
+  .lab-shell{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;}
+  .lab-hint{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);margin:0 0 14px;line-height:1.6;}
+  .lab-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+  .palette{display:flex;gap:8px;flex-wrap:wrap;}
+  .palette button{display:flex;align-items:center;gap:6px;}
+
+  .lab-canvas-wrap{
+    position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;
+    background-color:#0e141b;
+    background-image: radial-gradient(circle, #223040 1.2px, transparent 1.2px);
+    background-size:24px 24px;
+  }
+  .lab-canvas{position:relative;width:100%;height:460px;touch-action:none;}
+  .wire-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+  .wire-hit{stroke:transparent;stroke-width:16;fill:none;pointer-events:stroke;cursor:pointer;}
+  .wire-path{stroke:var(--teal);stroke-width:2;fill:none;opacity:.5;pointer-events:none;transition:stroke .15s ease, opacity .15s ease;}
+  .wire-group:hover .wire-path{stroke:var(--red);opacity:.95;}
+  .wire-blocked .wire-path{stroke-dasharray:5,5;stroke:var(--red);opacity:.6;}
+  .wire-draft{stroke:var(--amber);stroke-width:2;stroke-dasharray:4,4;fill:none;opacity:.8;}
+
+  .node-chip{
+    position:absolute;width:126px;
+    background:var(--panel-hi);border:1.5px solid var(--line);border-radius:8px;
+    padding:9px 10px;cursor:grab;user-select:none;
+  }
+  .node-chip.dragging{cursor:grabbing;z-index:30;box-shadow:0 6px 18px rgba(0,0,0,.4);}
+  .node-chip.active-node{border-color:var(--amber);box-shadow:0 0 0 3px rgba(232,163,61,.18);}
+  .node-chip.blocked-node{border-color:var(--red);}
+  .chip-top{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+  .chip-icon{width:15px;height:15px;flex-shrink:0;}
+  .chip-icon svg{width:100%;height:100%;}
+  .chip-type{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);flex:1;letter-spacing:.02em;}
+  .chip-del{background:none;border:none;color:var(--muted-2);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
+  .chip-del:hover{color:var(--red);}
+  input.chip-ip{
+    width:100%;background:#0a0e13;border:1px solid var(--line);border-radius:3px;
+    color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 6px;
+  }
+  input.chip-ip:focus{outline:none;border-color:var(--amber);}
+  .chip-fw-toggle{
+    margin-top:7px;width:100%;font-size:10px;padding:5px 6px;
+    border-color:var(--line);color:var(--muted);
+  }
+  .chip-fw-toggle.blocking{border-color:var(--red);color:var(--red);background:rgba(230,104,95,.08);}
+  .node-port{
+    position:absolute;top:50%;right:-6px;width:11px;height:11px;border-radius:50%;
+    background:var(--amber);transform:translateY(-50%);cursor:crosshair;
+    box-shadow:0 0 0 2px var(--panel-hi);
+  }
+  .node-port:hover{background:#ffc776;}
+
+  #labPacket{
+    position:absolute;width:12px;height:12px;border-radius:50%;
+    background:var(--amber);box-shadow:0 0 12px 4px rgba(232,163,61,.65);
+    opacity:0;pointer-events:none;z-index:25;transition:opacity .15s ease;
+  }
+  #labPacket.blocked{background:var(--red);box-shadow:0 0 12px 4px rgba(230,104,95,.65);}
+  #labPacket.visible{opacity:1;}
+
+  .lab-empty-msg{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--muted-2);font-family:'JetBrains Mono',monospace;font-size:13px;
+    pointer-events:none;text-align:center;padding:20px;
+  }
+
+  .lab-test{margin-top:16px;border-top:1px dashed var(--line);padding-top:16px;}
+  .test-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .test-row label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted-2);}
+  .test-row select{
+    background:#0a0e13;color:var(--text);border:1px solid var(--line);border-radius:4px;
+    padding:8px 9px;font-family:'JetBrains Mono',monospace;font-size:12px;min-width:140px;
+  }
+  .test-result{min-height:44px;border-top:1px dashed var(--line);padding-top:14px;}
+  .test-result .empty{color:var(--muted-2);font-family:'JetBrains Mono',monospace;font-size:13px;}
+  .test-title{font-family:'JetBrains Mono',monospace;font-size:12.5px;margin-bottom:6px;}
+  .test-title.ok{color:var(--teal);}
+  .test-title.bad{color:var(--red);}
+  .test-body{color:var(--text);font-size:14px;line-height:1.6;max-width:70ch;}
+
+  /* ============ ACORDEÓN ============ */
+  .accordion-shell{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px;}
+  .accordion-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .col-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted-2);padding:14px 12px 6px;}
+  details{border-bottom:1px solid var(--line);}
+  details:last-child{border-bottom:none;}
+  summary{
+    list-style:none;cursor:pointer;padding:13px 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    font-size:14px;font-weight:500;color:var(--text);
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary .q-num{font-family:'JetBrains Mono',monospace;color:var(--muted-2);font-size:11px;margin-right:8px;}
+  summary .chevron{color:var(--amber);font-family:'JetBrains Mono',monospace;transition:transform .15s ease;flex-shrink:0;}
+  details[open] summary .chevron{transform:rotate(90deg);}
+  details[open] summary{color:var(--amber);}
+  .acc-body{padding:0 12px 16px 12px;color:var(--muted);font-size:13.5px;line-height:1.65;max-width:64ch;}
+  @media (max-width:700px){ .accordion-cols{grid-template-columns:1fr;} }
+
+  /* ============ ENLACES ============ */
+  .link-shell{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:24px;}
+  table.rank-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:28px;}
+  table.rank-table th, table.rank-table td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line);}
+  table.rank-table th{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--muted);font-size:11px;}
+  table.rank-table td:first-child, table.rank-table th:first-child{text-align:left;color:var(--text);font-weight:500;}
+  table.rank-table td.r1{color:var(--amber);font-weight:700;}
+  table.rank-table td.r6{color:var(--muted-2);}
+  .scenario-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .scenario-buttons button{text-align:left;max-width:280px;}
+  .scenario-buttons button.active{border-color:var(--amber);color:var(--amber);}
+  .scenario-result{border-top:1px dashed var(--line);padding-top:16px;min-height:60px;}
+  .scenario-result .empty{color:var(--muted-2);font-family:'JetBrains Mono',monospace;font-size:13px;}
+  .detail-title{font-family:'JetBrains Mono',monospace;color:var(--amber);font-size:12px;margin-bottom:8px;}
+  .detail-body{color:var(--text);font-size:15px;line-height:1.65;max-width:70ch;}
+
+  /* ============ EQUIPO ============ */
+  .team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .team-card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;}
+  .team-card input.name{
+    background:transparent;border:none;border-bottom:1px solid var(--line);
+    color:var(--amber);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;
+    padding:2px 0 8px;width:100%;margin-bottom:10px;outline:none;
+  }
+  .team-card input.name:focus{border-bottom-color:var(--amber);}
+  .team-card [contenteditable]{color:var(--text);font-size:13.5px;line-height:1.6;outline:none;min-height:60px;}
+  .team-card [contenteditable]:empty::before{content:attr(data-placeholder);color:var(--muted-2);}
+  .team-note{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted-2);margin-top:14px;}
+  @media (max-width:700px){ .team-grid{grid-template-columns:1fr;} }
+
+  footer{
+    color:var(--muted-2);font-family:'JetBrains Mono',monospace;font-size:12px;
+    margin-top:40px;border-top:1px solid var(--line);padding-top:20px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow-line"><span class="dot"></span><span>Programación sobre Redes — TP grupal</span><span class="rule"></span></div>
+    <h1>Laboratorio de red</h1>
+    <p class="lede">Armá tu propia topología, conectá y desconectá cables, asigná IPs, prendé o apagá un firewall — y corré una prueba real de conectividad entre dos equipos para ver si se ven entre sí y por qué. El resto de las 33 preguntas está organizado abajo.</p>
+  </header>
+
+  <section id="lab">
+    <div class="section-head">
+      <h2>1. Armá tu propia red</h2>
+      <span class="tag">construí · conectá · probá</span>
+    </div>
+    <div class="lab-shell">
+      <p class="lab-hint">Simplificación consciente: switch y router no tienen IP propia acá, solo enrutan/reenvían. Un router deja pasar tráfico entre subredes distintas; sin uno en el camino, dos IPs de subredes distintas no se pueden ver aunque estén cableadas. Un firewall bloqueando corta cualquier camino que pase por él.</p>
+      <div class="lab-toolbar">
+        <div class="palette">
+          <button data-add="pc">+ PC</button>
+          <button data-add="server">+ Servidor</button>
+          <button data-add="switch">+ Switch</button>
+          <button data-add="router">+ Router</button>
+          <button data-add="firewall">+ Firewall</button>
+        </div>
+        <div class="lab-actions">
+          <select id="exampleSelect">
+            <option value="dosSubredes">Dos subredes + router</option>
+            <option value="mismaSubred">Todo en la misma subred</option>
+            <option value="firewallBloqueando">Servidor detrás de firewall</option>
+            <option value="faltaRouter">Trampa: falta el router</option>
+          </select>
+          <button id="btnLoadExample">Cargar ejemplo</button>
+          <button id="btnClearLab">Vaciar todo</button>
+        </div>
+      </div>
+      <div class="lab-canvas-wrap">
+        <div class="lab-canvas" id="labCanvas">
+          <svg class="wire-svg" id="wireSvg"></svg>
+          <div id="labPacket"></div>
+          <div class="lab-empty-msg" id="labEmptyMsg">Agregá dispositivos con los botones de arriba, arrastralos para ubicarlos,<br>y tirá un cable desde el punto ámbar de cada uno hasta otro dispositivo para conectarlos.</div>
+        </div>
+      </div>
+      <div class="lab-test">
+        <div class="test-row">
+          <label>ORIGEN</label>
+          <select id="testSrc"></select>
+          <label>DESTINO</label>
+          <select id="testDst"></select>
+          <button class="primary" id="btnTest">Probar conexión</button>
+        </div>
+        <div class="test-result" id="testResult">
+          <p class="empty">Armá al menos dos equipos, conectalos con cables y probá si se ven entre sí.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="protocolos">
+    <div class="section-head">
+      <h2>2. Servicios, protocolos y estándares</h2>
+      <span class="tag">preguntas 5, 6, 7, 10–12, 14, 15, 20, 22–32</span>
+    </div>
+    <div class="accordion-shell">
+      <div class="accordion-cols">
+        <div>
+          <div class="col-label">SERVICIOS DE RED</div>
+          <details><summary><span><span class="q-num">05</span>¿Qué es un protocolo de comunicaciones?</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Conjunto de reglas que define cómo dos o más dispositivos se comunican: formato de los mensajes, orden en que se envían, y cómo se detectan y corrigen errores. Sin un protocolo compartido, dos equipos pueden estar conectados físicamente y aun así no entenderse.</div>
+          </details>
+          <details><summary><span><span class="q-num">06/07</span>TCP/IP, NetBios y la estructura de un paquete</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">TCP/IP es el conjunto de protocolos que hoy mueve prácticamente todo internet, organizado en capas (aplicación, transporte, red, enlace); NetBios es más viejo, pensado para redes locales pequeñas, sin enrutamiento real entre redes distintas — por eso quedó relegado a compatibilidad. Un paquete IP se arma con un header (versión, IPs de origen/destino, TTL, checksum, entre otros campos) más los datos. Dentro de un segmento TCP existen los "flags" (SYN, ACK, FIN, RST, entre otros): banderas de un bit que indican el estado de la conexión, como iniciar, confirmar o cerrar la comunicación.</div>
+          </details>
+          <details><summary><span><span class="q-num">10</span>Servicio de DHCP</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Asigna automáticamente direcciones IP (y otros parámetros como gateway y DNS) a los equipos que se conectan a la red, evitando configurarlos a mano uno por uno. Funciona con un intercambio de cuatro mensajes: Discover, Offer, Request y Ack.</div>
+          </details>
+          <details><summary><span><span class="q-num">11</span>Servicio de DNS</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Traduce nombres de dominio legibles (como un sitio web) a la dirección IP que realmente usan los equipos para comunicarse. Trabaja de forma jerárquica y distribuida entre servidores en vez de depender de uno solo.</div>
+          </details>
+          <details><summary><span><span class="q-num">12</span>Tecnologías Wireless y estándares</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">La familia IEEE 802.11 define el Wi-Fi, con variantes (a/b/g/n/ac/ax) que fueron subiendo velocidad y alcance. Bluetooth cubre distancias cortas entre dispositivos personales, y las redes celulares (3G/4G/5G) dan cobertura amplia para datos móviles.</div>
+          </details>
+          <details><summary><span><span class="q-num">14</span>Protocolo Spanning Tree</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Evita loops en redes con switches redundantes: detecta caminos duplicados entre switches y bloquea lógicamente los que sobran, dejando un solo camino activo, listo para activarse automáticamente si el principal falla.</div>
+          </details>
+          <details><summary><span><span class="q-num">20</span>NBL según Microsoft</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Net Buffer List: la estructura que usa el stack de red de Windows (NDIS) para representar y mover paquetes de datos entre los distintos niveles del driver de red.</div>
+          </details>
+          <details><summary><span><span class="q-num">30/31</span>Protocolos de correo</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">SMTP se usa para enviar correo, tanto de cliente a servidor como entre servidores. Para leer el correo recibido se usa POP3 (descarga los mensajes al dispositivo y por defecto los borra del servidor) o IMAP (los mantiene sincronizados en el servidor, visibles desde varios dispositivos a la vez — hoy el más usado).</div>
+          </details>
+          <details><summary><span><span class="q-num">25</span>Coaxial vs UTP vs Fibra</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">El coaxial fue el cable clásico de redes viejas y TV por cable: buena resistencia a interferencia pero incómodo de instalar. El UTP (par trenzado, el cable de red común) es barato y fácil de instalar pero limitado a unos 100 metros y algo sensible a interferencia. La fibra transmite luz en vez de electricidad: mucha más velocidad y distancia sin interferencia electromagnética, a cambio de mayor costo y fragilidad en el manejo.</div>
+          </details>
+          <details><summary><span><span class="q-num">32</span>IPv4 vs IPv6</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">IPv4 usa direcciones de 32 bits (unos 4.300 millones de combinaciones, que ya se agotaron) escritas en cuatro octetos como 192.168.1.1. IPv6 usa 128 bits, un espacio de direcciones prácticamente inagotable, y de paso simplifica el header y elimina la necesidad de NAT que IPv4 necesita para estirar sus direcciones disponibles.</div>
+          </details>
+        </div>
+        <div>
+          <div class="col-label">PROTOCOLOS Y ESTÁNDARES AVANZADOS</div>
+          <details><summary><span><span class="q-num">15</span>Protocolo OSPF</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Protocolo de ruteo dinámico de estado de enlace: cada router arma un mapa completo de la topología intercambiando información con sus vecinos, y calcula el camino más corto a cada destino con el algoritmo de Dijkstra. Se usa mucho en redes internas grandes.</div>
+          </details>
+          <details><summary><span><span class="q-num">22</span>Tecnología LTE</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Tecnología de telefonía móvil de cuarta generación (4G), pensada para transmitir datos a alta velocidad sobre la red celular, con latencia mucho menor que sus predecesoras. Es la base sobre la que después se construyó el 5G.</div>
+          </details>
+          <details><summary><span><span class="q-num">23</span>Microsoft Teams</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Plataforma de colaboración que combina chat, videollamadas y compartición de archivos integrada con Office 365, pensada para la comunicación de equipos de trabajo. (Zoom es una alternativa comparable, más enfocada puramente en videoconferencia.)</div>
+          </details>
+          <details><summary><span><span class="q-num">24</span>Calidad en un enlace MPLS</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Aplicar QoS sobre MPLS significa priorizar ciertos tipos de tráfico (voz o video en tiempo real, por ejemplo) por sobre otros menos sensibles a la latencia (como una transferencia de archivos), garantizando ancho de banda o prioridad mínima para el tráfico crítico.</div>
+          </details>
+          <details><summary><span><span class="q-num">26</span>Certificaciones Cisco</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">CCENT es el nivel de entrada (fundamentos), CCNA el nivel asociado, y CCNP el nivel profesional, más avanzado y especializado. El track Routing & Switching cubre configuración y troubleshooting de redes LAN/WAN; el track Security, en cambio, se enfoca en firewalls, VPNs y protección de la red en vez de solo conectividad.</div>
+          </details>
+          <details><summary><span><span class="q-num">27</span>Modelo OSI</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Modelo de referencia de 7 capas (Física, Enlace, Red, Transporte, Sesión, Presentación, Aplicación) que describe qué función cumple cada nivel en una comunicación de red. Cada capa solo se comunica con la de arriba y la de abajo, lo que permite que tecnologías distintas encajen entre sí sin que cada una tenga que saber cómo funcionan las demás.</div>
+          </details>
+          <details><summary><span><span class="q-num">28</span>IEEE 802.3</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Define Ethernet, la tecnología de red cableada más usada, especificando cómo se transmiten los datos sobre UTP o fibra a nivel físico y de enlace. Ventaja: estable, económico y con gran ancho de banda disponible. Desventaja: requiere cableado físico, lo que limita movilidad y puede encarecer instalaciones grandes.</div>
+          </details>
+          <details><summary><span><span class="q-num">29</span>IEEE 802.4</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Definía redes en topología de bus con paso de testigo (token bus): cada equipo solo podía transmitir cuando tenía el "token". Se usó sobre todo en entornos industriales, pero quedó obsoleto frente a Ethernet y hoy prácticamente no se usa.</div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="enlaces">
+    <div class="section-head">
+      <h2>3. Elegí el enlace</h2>
+      <span class="tag">pregunta 21</span>
+    </div>
+    <div class="link-shell">
+      <table class="rank-table">
+        <thead>
+          <tr><th>Criterio</th><th>MPLS</th><th>LAN to LAN</th><th>Microondas</th><th>VSAT</th><th>Fibra dedicada</th><th>Celular 4G/5G</th></tr>
+        </thead>
+        <tbody id="rankBody"></tbody>
+      </table>
+      <div class="scenario-buttons" id="scenarioButtons"></div>
+      <div class="scenario-result" id="scenarioResult">
+        <p class="empty">← Elegí un escenario para ver qué enlace conviene y por qué.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="equipo">
+    <div class="section-head">
+      <h2>4. Nuestra experiencia con redes</h2>
+      <span class="tag">pregunta 33 · individual</span>
+    </div>
+    <div class="team-grid">
+      <div class="team-card"><input class="name" placeholder="Nombre del integrante 1"><div contenteditable="true" data-placeholder="Escribí acá tu experiencia con redes: administrás el router de tu casa, hacés networking en el laburo, armaste una PAN, no tenés experiencia, etc."></div></div>
+      <div class="team-card"><input class="name" placeholder="Nombre del integrante 2"><div contenteditable="true" data-placeholder="Escribí acá tu experiencia con redes..."></div></div>
+      <div class="team-card"><input class="name" placeholder="Nombre del integrante 3"><div contenteditable="true" data-placeholder="Escribí acá tu experiencia con redes..."></div></div>
+      <div class="team-card"><input class="name" placeholder="Nombre del integrante 4"><div contenteditable="true" data-placeholder="Escribí acá tu experiencia con redes..."></div></div>
+    </div>
+    <p class="team-note">Estos campos son editables directo en la página, pero no se guardan solos — copien el texto final antes de cerrar la pestaña.</p>
+  </section>
+
+  <footer>TP Programación sobre Redes · laboratorio interactivo construido para acompañar la entrega grupal</footer>
+</div>
+
+<script>
+(function(){
+  // ============================================================
+  // LABORATORIO DE RED
+  // ============================================================
+  const ICONS = {
+    pc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/></svg>',
+    server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="14" width="18" height="7" rx="1"/><circle cx="7" cy="6.5" r="0.8" fill="currentColor" stroke="none"/><circle cx="7" cy="17.5" r="0.8" fill="currentColor" stroke="none"/></svg>',
+    switch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="1"/><path d="M6 11v2M10 11v2M14 11v2M18 11v2"/></svg>',
+    router: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="10" width="18" height="7" rx="1"/><path d="M7 10V7a2 2 0 012-2M17 10V7a2 2 0 00-2-2M12 5V3"/><circle cx="17" cy="13.5" r="0.8" fill="currentColor" stroke="none"/></svg>',
+    firewall: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+  };
+  const TYPE_LABEL = { pc:'PC', server:'SERVIDOR', switch:'SWITCH', router:'ROUTER', firewall:'FIREWALL' };
+
+  let nodes = [];   // {id, type, x, y, ip, blocking}
+  let edges = [];   // {id, a, b}
+  let idSeq = 1;
+  let hostIpSeq = 10;
+
+  const canvas = document.getElementById('labCanvas');
+  const svg = document.getElementById('wireSvg');
+  const emptyMsg = document.getElementById('labEmptyMsg');
+  const packetEl = document.getElementById('labPacket');
+  const nodeEls = new Map();
+  const wireGroupEls = new Map();
+
+  function uid(prefix){ return prefix + (idSeq++); }
+
+  function defaultIp(type){
+    if(type === 'pc' || type === 'server'){
+      const ip = `192.168.1.${hostIpSeq}`;
+      hostIpSeq++;
+      return ip;
+    }
+    return '';
+  }
+
+  function addNode(type, x, y){
+    const n = {
+      id: uid('n'),
+      type,
+      x: x != null ? x : 40 + (nodes.length % 5) * 150,
+      y: y != null ? y : 40 + Math.floor(nodes.length / 5) * 130,
+      ip: defaultIp(type),
+      blocking: type === 'firewall' ? false : undefined,
+    };
+    nodes.push(n);
+    renderNode(n);
+    syncEmptyMsg();
+    updateTestSelects();
+    return n;
+  }
+
+  function removeNode(id){
+    nodes = nodes.filter(n => n.id !== id);
+    edges = edges.filter(e => {
+      const touches = e.a === id || e.b === id;
+      if(touches) removeWireEl(e.id);
+      return !touches;
+    });
+    const el = nodeEls.get(id);
+    if(el) el.remove();
+    nodeEls.delete(id);
+    syncEmptyMsg();
+    updateTestSelects();
+  }
+
+  function renderNode(n){
+    const el = document.createElement('div');
+    el.className = 'node-chip';
+    el.dataset.id = n.id;
+    el.style.left = n.x + 'px';
+    el.style.top = n.y + 'px';
+
+    const ipRow = (n.type === 'pc' || n.type === 'server')
+      ? `<input class="chip-ip" value="${n.ip}" placeholder="IP" />`
+      : '';
+    const fwRow = n.type === 'firewall'
+      ? `<button class="chip-fw-toggle">bloqueando: NO</button>`
+      : '';
+
+    el.innerHTML = `
+      <div class="chip-top">
+        <span class="chip-icon">${ICONS[n.type]}</span>
+        <span class="chip-type">${TYPE_LABEL[n.type]}</span>
+        <button class="chip-del" title="Eliminar">×</button>
+      </div>
+      ${ipRow}
+      ${fwRow}
+      <div class="node-port" title="Arrastrá para conectar"></div>
+    `;
+    canvas.appendChild(el);
+    nodeEls.set(n.id, el);
+
+    // borrar nodo
+    el.querySelector('.chip-del').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeNode(n.id);
+    });
+
+    // editar IP
+    const ipInput = el.querySelector('.chip-ip');
+    if(ipInput){
+      ipInput.addEventListener('input', () => { n.ip = ipInput.value.trim(); });
+      ipInput.addEventListener('mousedown', ev => ev.stopPropagation());
+    }
+
+    // toggle firewall
+    const fwBtn = el.querySelector('.chip-fw-toggle');
+    if(fwBtn){
+      fwBtn.addEventListener('mousedown', ev => ev.stopPropagation());
+      fwBtn.addEventListener('click', () => {
+        n.blocking = !n.blocking;
+        fwBtn.textContent = 'bloqueando: ' + (n.blocking ? 'SÍ' : 'NO');
+        fwBtn.classList.toggle('blocking', n.blocking);
+        el.classList.toggle('blocked-node', n.blocking);
+        renderWires();
+      });
+    }
+
+    // arrastrar nodo
+    el.addEventListener('pointerdown', (ev) => {
+      if(ev.target.closest('.node-port') || ev.target.closest('input') || ev.target.closest('button')) return;
+      startDragNode(n, el, ev);
+    });
+
+    // iniciar cable desde el puerto
+    el.querySelector('.node-port').addEventListener('pointerdown', (ev) => {
+      ev.stopPropagation();
+      startDraftWire(n, ev);
+    });
+  }
+
+  function startDragNode(n, el, ev){
+    ev.preventDefault();
+    el.classList.add('dragging');
+    const rect = canvas.getBoundingClientRect();
+    const offX = ev.clientX - rect.left - n.x;
+    const offY = ev.clientY - rect.top - n.y;
+
+    function move(e){
+      const cx = e.clientX - rect.left - offX;
+      const cy = e.clientY - rect.top - offY;
+      n.x = Math.max(0, Math.min(rect.width - 126, cx));
+      n.y = Math.max(0, Math.min(rect.height - 90, cy));
+      el.style.left = n.x + 'px';
+      el.style.top = n.y + 'px';
+      renderWires();
+    }
+    function up(){
+      el.classList.remove('dragging');
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    }
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  function nodeCenter(n){
+    return { x: n.x + 63, y: n.y + 45 };
+  }
+
+  let draftLine = null;
+  function startDraftWire(fromNode, ev){
+    const rect = canvas.getBoundingClientRect();
+    draftLine = document.createElementNS('http://www.w3.org/2000/svg','path');
+    draftLine.setAttribute('class','wire-draft');
+    svg.appendChild(draftLine);
+
+    function move(e){
+      const c1 = nodeCenter(fromNode);
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      draftLine.setAttribute('d', `M${c1.x},${c1.y} L${mx},${my}`);
+    }
+    function up(e){
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      if(draftLine){ draftLine.remove(); draftLine = null; }
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const chip = target && target.closest ? target.closest('.node-chip') : null;
+      if(chip){
+        const toId = chip.dataset.id;
+        if(toId && toId !== fromNode.id){
+          addEdge(fromNode.id, toId);
+        }
+      }
+    }
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  function edgeExists(a, b){
+    return edges.some(e => (e.a===a && e.b===b) || (e.a===b && e.b===a));
+  }
+
+  function addEdge(a, b){
+    if(edgeExists(a,b)) return;
+    const e = { id: uid('e'), a, b };
+    edges.push(e);
+    renderWire(e);
+    updateTestSelects();
+  }
+
+  function removeEdge(id){
+    edges = edges.filter(e => e.id !== id);
+    removeWireEl(id);
+  }
+
+  function removeWireEl(id){
+    const g = wireGroupEls.get(id);
+    if(g) g.remove();
+    wireGroupEls.delete(id);
+  }
+
+  function renderWire(e){
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','wire-group');
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','path');
+    hit.setAttribute('class','wire-hit');
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('class','wire-path');
+    g.appendChild(hit);
+    g.appendChild(path);
+    svg.appendChild(g);
+    wireGroupEls.set(e.id, g);
+    g.addEventListener('click', () => removeEdge(e.id));
+    updateWireD(e, g);
+  }
+
+  function updateWireD(e, g){
+    const na = nodes.find(n => n.id === e.a);
+    const nb = nodes.find(n => n.id === e.b);
+    if(!na || !nb) return;
+    const c1 = nodeCenter(na), c2 = nodeCenter(nb);
+    const mx = (c1.x + c2.x) / 2;
+    const d = `M${c1.x},${c1.y} C${mx},${c1.y} ${mx},${c2.y} ${c2.x},${c2.y}`;
+    g.querySelectorAll('path').forEach(p => p.setAttribute('d', d));
+    const blocked = (na.type==='firewall' && na.blocking) || (nb.type==='firewall' && nb.blocking);
+    g.classList.toggle('wire-blocked', !!blocked);
+  }
+
+  function renderWires(){
+    edges.forEach(e => {
+      const g = wireGroupEls.get(e.id);
+      if(g) updateWireD(e, g);
+    });
+  }
+
+  function syncEmptyMsg(){
+    emptyMsg.style.display = nodes.length === 0 ? 'flex' : 'none';
+  }
+
+  document.querySelectorAll('.palette [data-add]').forEach(btn => {
+    btn.addEventListener('click', () => addNode(btn.getAttribute('data-add')));
+  });
+
+  document.getElementById('btnClearLab').addEventListener('click', () => {
+    [...nodes].forEach(n => removeNode(n.id));
+    hostIpSeq = 10;
+  });
+
+  function setIp(n, ip){
+    n.ip = ip;
+    const input = document.querySelector(`[data-id="${n.id}"] .chip-ip`);
+    if(input) input.value = ip;
+  }
+
+  function clearLab(){
+    [...nodes].forEach(n => removeNode(n.id));
+    hostIpSeq = 10;
+  }
+
+  const EXAMPLES = {
+    // Dos subredes distintas, con router: el caso "normal" que ya tenían.
+    dosSubredes(){
+      const a  = addNode('pc', 20, 60);
+      const sw = addNode('switch', 190, 60);
+      const rt = addNode('router', 360, 60);
+      const fw = addNode('firewall', 530, 60);
+      const sv = addNode('server', 700, 60);
+      const b  = addNode('pc', 700, 220);
+      setIp(a, '192.168.1.10');
+      setIp(b, '192.168.2.20');
+      setIp(sv, '192.168.2.30');
+      addEdge(a.id, sw.id); addEdge(sw.id, rt.id); addEdge(rt.id, fw.id);
+      addEdge(fw.id, sv.id); addEdge(fw.id, b.id);
+    },
+    // Todo en la misma subred, sin router: alcanza con switches.
+    mismaSubred(){
+      const a  = addNode('pc', 20, 60);
+      const sw1 = addNode('switch', 190, 60);
+      const sw2 = addNode('switch', 360, 60);
+      const b  = addNode('pc', 530, 60);
+      const sv = addNode('server', 530, 220);
+      setIp(a, '192.168.1.10');
+      setIp(b, '192.168.1.11');
+      setIp(sv, '192.168.1.12');
+      addEdge(a.id, sw1.id); addEdge(sw1.id, sw2.id); addEdge(sw2.id, b.id); addEdge(sw2.id, sv.id);
+    },
+    // Servidor detrás de un firewall que ya arranca bloqueando.
+    firewallBloqueando(){
+      const a  = addNode('pc', 20, 60);
+      const sw = addNode('switch', 190, 60);
+      const fw = addNode('firewall', 360, 60);
+      const sv = addNode('server', 530, 60);
+      setIp(a, '192.168.1.10');
+      setIp(sv, '192.168.1.20');
+      addEdge(a.id, sw.id); addEdge(sw.id, fw.id); addEdge(fw.id, sv.id);
+      fw.blocking = true;
+      const fwBtn = document.querySelector(`[data-id="${fw.id}"] .chip-fw-toggle`);
+      if(fwBtn){ fwBtn.textContent = 'bloqueando: SÍ'; fwBtn.classList.add('blocking'); }
+      const fwEl = nodeEls.get(fw.id);
+      if(fwEl) fwEl.classList.add('blocked-node');
+      renderWires();
+    },
+    // Dos subredes distintas cableadas solo con switches: falta el router a propósito.
+    faltaRouter(){
+      const a  = addNode('pc', 20, 60);
+      const sw1 = addNode('switch', 190, 60);
+      const sw2 = addNode('switch', 360, 60);
+      const b  = addNode('pc', 530, 60);
+      setIp(a, '192.168.1.10');
+      setIp(b, '192.168.2.20');
+      addEdge(a.id, sw1.id); addEdge(sw1.id, sw2.id); addEdge(sw2.id, b.id);
+    },
+  };
+
+  document.getElementById('btnLoadExample').addEventListener('click', () => {
+    const key = document.getElementById('exampleSelect').value;
+    clearLab();
+    (EXAMPLES[key] || EXAMPLES.dosSubredes)();
+  });
+
+  // -------- selects de prueba --------
+  const selSrc = document.getElementById('testSrc');
+  const selDst = document.getElementById('testDst');
+  const btnTest = document.getElementById('btnTest');
+  const testResult = document.getElementById('testResult');
+
+  function updateTestSelects(){
+    const opts = nodes.filter(n => n.type==='pc' || n.type==='server');
+    const prevSrc = selSrc.value, prevDst = selDst.value;
+    const html = opts.map(n => `<option value="${n.id}">${TYPE_LABEL[n.type]} · ${n.ip || 's/IP'}</option>`).join('');
+    selSrc.innerHTML = html;
+    selDst.innerHTML = html;
+    if(opts.find(o => o.id === prevSrc)) selSrc.value = prevSrc;
+    if(opts.find(o => o.id === prevDst)) selDst.value = prevDst;
+    // si quedaron apuntando al mismo equipo, mandamos el destino al siguiente distinto
+    if(opts.length > 1 && selSrc.value === selDst.value){
+      const other = opts.find(o => o.id !== selSrc.value);
+      if(other) selDst.value = other.id;
+    }
+    btnTest.disabled = opts.length < 2;
+  }
+
+  // -------- lógica de conectividad --------
+  function buildAdjacency(excludeBlockingFirewalls){
+    const adj = {};
+    nodes.forEach(n => adj[n.id] = []);
+    edges.forEach(e => {
+      const na = nodes.find(n => n.id === e.a);
+      const nb = nodes.find(n => n.id === e.b);
+      if(!na || !nb) return;
+      if(excludeBlockingFirewalls){
+        const blockA = na.type === 'firewall' && na.blocking;
+        const blockB = nb.type === 'firewall' && nb.blocking;
+        if(blockA || blockB) return;
+      }
+      adj[e.a].push(e.b);
+      adj[e.b].push(e.a);
+    });
+    return adj;
+  }
+
+  function bfsSimple(adj, src, dst){
+    const visited = new Set([src]);
+    const parent = {};
+    const q = [src]; let h = 0;
+    while(h < q.length){
+      const cur = q[h++];
+      if(cur === dst) break;
+      for(const nb of adj[cur]){
+        if(!visited.has(nb)){ visited.add(nb); parent[nb] = cur; q.push(nb); }
+      }
+    }
+    if(!visited.has(dst)) return null;
+    const path = [dst];
+    let c = dst;
+    while(c !== src){ c = parent[c]; path.unshift(c); }
+    return path;
+  }
+
+  function bfsRouterAware(adj, src, dst){
+    const type = id => nodes.find(n => n.id === id).type;
+    const startPassed = type(src) === 'router';
+    const startKey = src + '|' + startPassed;
+    const visited = new Set([startKey]);
+    const parent = {};
+    const q = [{id:src, passed:startPassed}]; let h = 0;
+    while(h < q.length){
+      const cur = q[h++];
+      for(const nb of adj[cur.id]){
+        const newPassed = cur.passed || type(nb) === 'router';
+        const key = nb + '|' + newPassed;
+        if(!visited.has(key)){
+          visited.add(key);
+          parent[key] = cur.id + '|' + cur.passed;
+          q.push({id:nb, passed:newPassed});
+        }
+      }
+    }
+    function reconstruct(key){
+      const path = []; let k = key;
+      while(k){ path.unshift(k.split('|')[0]); k = parent[k]; }
+      return path;
+    }
+    return {
+      reachTrue: visited.has(dst+'|true'),
+      reachFalse: visited.has(dst+'|false'),
+      pathTrue: visited.has(dst+'|true') ? reconstruct(dst+'|true') : null,
+      pathFalse: visited.has(dst+'|false') ? reconstruct(dst+'|false') : null,
+    };
+  }
+
+  function sameSubnet(ipA, ipB){
+    if(!ipA || !ipB) return true;
+    const a = ipA.split('.'), b = ipB.split('.');
+    if(a.length < 3 || b.length < 3) return true;
+    return a[0]===b[0] && a[1]===b[1] && a[2]===b[2];
+  }
+
+  function firstBlockingFirewallInPath(path){
+    for(const id of path){
+      const n = nodes.find(x => x.id === id);
+      if(n && n.type === 'firewall' && n.blocking) return id;
+    }
+    return null;
+  }
+
+  function runTest(){
+    const srcId = selSrc.value, dstId = selDst.value;
+    if(!srcId || !dstId || srcId === dstId){
+      showResult(false, 'Elegí dos equipos distintos', 'Origen y destino tienen que ser dispositivos diferentes.');
+      return;
+    }
+    const nodeSrc = nodes.find(n => n.id === srcId);
+    const nodeDst = nodes.find(n => n.id === dstId);
+
+    const physAdj = buildAdjacency(false);
+    const physPath = bfsSimple(physAdj, srcId, dstId);
+    if(!physPath){
+      showResult(false, 'Sin conexión física', 'No hay ningún cable, directo o indirecto, entre estos dos equipos. Conectalos con al menos un camino de cables.');
+      animateAlongPath(null, false);
+      return;
+    }
+
+    const needsRouter = !sameSubnet(nodeSrc.ip, nodeDst.ip);
+    const allowAdj = buildAdjacency(true);
+    const res = bfsRouterAware(allowAdj, srcId, dstId);
+
+    let ok, title, body, path;
+    if(needsRouter){
+      if(res.reachTrue){
+        ok = true; path = res.pathTrue;
+        title = 'Conectados';
+        body = `${nodeSrc.ip} y ${nodeDst.ip} están en subredes distintas, pero el camino pasa por un router que rutea el tráfico entre ellas.`;
+      } else if(res.reachFalse){
+        ok = false; path = res.pathFalse;
+        title = 'Cableados, pero sin ruta';
+        body = `${nodeSrc.ip} y ${nodeDst.ip} están en subredes distintas y el camino disponible no pasa por ningún router (o un firewall lo está bloqueando). Agregá o reconectá un router en el medio.`;
+      } else {
+        ok = false; path = null;
+        const fwId = firstBlockingFirewallInPath(physPath);
+        title = 'Bloqueado';
+        body = fwId ? 'El único camino físico pasa por un firewall que está bloqueando el tráfico. Apagalo o buscá otro camino.' : 'No hay ruta disponible entre estas dos IPs.';
+      }
+    } else {
+      if(res.reachTrue || res.reachFalse){
+        ok = true; path = res.reachFalse ? res.pathFalse : res.pathTrue;
+        title = 'Conectados';
+        body = `${nodeSrc.ip} y ${nodeDst.ip} están en la misma subred, así que no hace falta pasar por ningún router.`;
+      } else {
+        ok = false; path = null;
+        title = 'Bloqueado';
+        body = 'Hay cable físico entre ellos, pero un firewall está bloqueando el único camino disponible. Apagalo o buscá otro camino.';
+      }
+    }
+
+    showResult(ok, title, body);
+    animateAlongPath(path || physPath, ok);
+  }
+
+  function showResult(ok, title, body){
+    testResult.innerHTML = `<div class="test-title ${ok?'ok':'bad'}">${title}</div><div class="test-body">${body}</div>`;
+  }
+
+  let animId = null;
+  function animateAlongPath(path, ok){
+    if(animId) cancelAnimationFrame(animId);
+    document.querySelectorAll('.node-chip').forEach(el => el.classList.remove('active-node'));
+    if(!path || path.length < 2){ packetEl.classList.remove('visible'); return; }
+
+    packetEl.classList.toggle('blocked', !ok);
+    packetEl.classList.add('visible');
+
+    const pts = path.map(id => nodeCenter(nodes.find(n => n.id === id)));
+    const totalMs = 550 * (pts.length - 1);
+    const start = performance.now();
+
+    function frame(now){
+      const t = Math.min((now - start) / totalMs, 1);
+      const segF = t * (pts.length - 1);
+      const seg = Math.min(Math.floor(segF), pts.length - 2);
+      const local = segF - seg;
+      const a = pts[seg], b = pts[seg+1];
+      const x = a.x + (b.x - a.x) * local;
+      const y = a.y + (b.y - a.y) * local;
+      packetEl.style.left = (x - 6) + 'px';
+      packetEl.style.top = (y - 6) + 'px';
+
+      const passedIdx = Math.min(Math.floor(segF) + (local > 0.05 ? 1 : 0), path.length - 1);
+      const el = nodeEls.get(path[passedIdx]);
+      if(el) el.classList.add('active-node');
+
+      if(t < 1){ animId = requestAnimationFrame(frame); }
+      else { setTimeout(() => packetEl.classList.remove('visible'), 300); }
+    }
+    animId = requestAnimationFrame(frame);
+  }
+
+  btnTest.addEventListener('click', runTest);
+  updateTestSelects();
+  syncEmptyMsg();
+
+  // ============================================================
+  // SELECTOR DE ENLACES (Q21)
+  // ============================================================
+  const rankRows = [
+    { crit: "Económico",                ranks: [3,4,2,6,5,1] },
+    { crit: "Performance",              ranks: [3,2,4,6,1,5] },
+    { crit: "Mayor capacidad",          ranks: [3,2,4,6,1,5] },
+    { crit: "Config. de restricciones", ranks: [1,3,4,6,2,5] },
+    { crit: "Soporte a mayor distancia",ranks: [2,6,4,1,5,3] },
+    { crit: "Menor esfuerzo de config.",ranks: [2,4,5,6,3,1] },
+  ];
+  const rankBody = document.getElementById('rankBody');
+  rankRows.forEach(row => {
+    const tr = document.createElement('tr');
+    let cells = `<td>${row.crit}</td>`;
+    row.ranks.forEach(r => {
+      const cls = r === 1 ? 'r1' : (r === 6 ? 'r6' : '');
+      cells += `<td class="${cls}">${r}</td>`;
+    });
+    tr.innerHTML = cells;
+    rankBody.appendChild(tr);
+  });
+
+  const scenarios = [
+    { label:"a) Varios call centers ↔ data center central", choice:"MPLS",
+      why:"MPLS es una red multipunto gestionada por el proveedor: conecta muchas sedes contra un punto central con buen balance entre performance, costo y calidad de servicio configurable — ideal para tráfico crítico entre varios call centers." },
+    { label:"b) Datos de pozos petroleros, 15 min/día", choice:"VSAT",
+      why:"Los pozos suelen estar en zonas remotas sin infraestructura terrestre. VSAT (satelital) llega ahí donde nada más llega, y como el uso es esporádico no hace falta ancho de banda constante ni bajísima latencia." },
+    { label:"c) Dos edificios enfrentados en la misma calle", choice:"Microondas",
+      why:"Con línea de vista directa y poca distancia, un enlace de microondas da alta velocidad sin costo de obra civil ni depender de un proveedor externo — se instala rápido entre las dos azoteas." },
+  ];
+  const scenarioButtons = document.getElementById('scenarioButtons');
+  const scenarioResult = document.getElementById('scenarioResult');
+  scenarios.forEach(s => {
+    const btn = document.createElement('button');
+    btn.textContent = s.label;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#scenarioButtons button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      scenarioResult.innerHTML = `<div class="detail-title">Enlace recomendado: ${s.choice}</div><div class="detail-body">${s.why}</div>`;
+    });
+    scenarioButtons.appendChild(btn);
+  });
+})();
+</script>
+</body>
+</html>

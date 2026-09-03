@@ -113,6 +113,12 @@
   .node-chip.dragging{cursor:grabbing;z-index:30;box-shadow:0 6px 18px rgba(0,0,0,.4);}
   .node-chip.active-node{border-color:var(--amber);box-shadow:0 0 0 3px rgba(232,163,61,.18);}
   .node-chip.blocked-node{border-color:var(--red);}
+  .node-chip.flash-blocked{animation:flashBlockedNode .7s ease;}
+  @keyframes flashBlockedNode{
+    0%{box-shadow:0 0 0 0 rgba(230,104,95,.7);border-color:var(--red);}
+    60%{box-shadow:0 0 0 8px rgba(230,104,95,0);border-color:var(--red);}
+    100%{box-shadow:0 0 0 0 rgba(230,104,95,0);}
+  }
   .chip-top{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
   .chip-icon{width:15px;height:15px;flex-shrink:0;}
   .chip-icon svg{width:100%;height:100%;}
@@ -198,6 +204,42 @@
   .scenario-result .empty{color:var(--muted-2);font-family:'JetBrains Mono',monospace;font-size:13px;}
   .detail-title{font-family:'JetBrains Mono',monospace;color:var(--amber);font-size:12px;margin-bottom:8px;}
   .detail-body{color:var(--text);font-size:15px;line-height:1.65;max-width:70ch;}
+
+  .quiz-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding-top:16px;border-top:1px dashed var(--line);}
+  .quiz-row label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted-2);}
+
+  /* ============ MINI-SIMULACIONES (acordeón) ============ */
+  .mini-sim{margin-top:14px;border-top:1px dashed var(--line);padding-top:14px;}
+  .mini-row{position:relative;display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .mini-node{
+    background:var(--panel-hi);border:1.5px solid var(--line);border-radius:6px;
+    padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;text-align:center;
+    min-width:64px;color:var(--muted);transition:border-color .2s ease, color .2s ease;line-height:1.5;
+  }
+  .mini-node.hit{border-color:var(--amber);color:var(--amber);}
+  .mini-line{flex:1;height:1px;background:var(--line);min-width:12px;}
+  .mini-dot{
+    position:absolute;width:9px;height:9px;border-radius:50%;background:var(--amber);
+    box-shadow:0 0 8px 3px rgba(232,163,61,.6);opacity:0;pointer-events:none;transition:opacity .15s ease;
+  }
+  .mini-dot.visible{opacity:1;}
+  .mini-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  .mini-input{
+    background:#0a0e13;border:1px solid var(--line);border-radius:4px;color:var(--text);
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:6px 8px;flex:1;min-width:140px;
+  }
+  .mini-input:focus{outline:none;border-color:var(--amber);}
+  .mini-log{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);line-height:1.8;min-height:20px;}
+  .mini-log span{color:var(--amber);}
+  .mini-log .ip-result{color:var(--teal);}
+
+  .stp-svg{width:100%;max-width:260px;display:block;margin-bottom:12px;}
+  .stp-edge{stroke:var(--line);stroke-width:2;transition:stroke .2s ease;}
+  .stp-edge.blocked{stroke:var(--red);stroke-dasharray:5,5;}
+  .stp-node{fill:var(--panel-hi);stroke:var(--line);stroke-width:1.5;}
+  .stp-label{fill:var(--text);font-family:'JetBrains Mono',monospace;font-size:9px;text-anchor:middle;}
+  #stpDot{fill:var(--amber);opacity:0;filter:drop-shadow(0 0 3px rgba(232,163,61,.8));transition:opacity .15s ease;}
+  #stpDot.visible{opacity:1;}
 
   /* ============ EQUIPO ============ */
   .team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
@@ -292,16 +334,78 @@
             <div class="acc-body">TCP/IP es el conjunto de protocolos que hoy mueve prácticamente todo internet, organizado en capas (aplicación, transporte, red, enlace); NetBios es más viejo, pensado para redes locales pequeñas, sin enrutamiento real entre redes distintas — por eso quedó relegado a compatibilidad. Un paquete IP se arma con un header (versión, IPs de origen/destino, TTL, checksum, entre otros campos) más los datos. Dentro de un segmento TCP existen los "flags" (SYN, ACK, FIN, RST, entre otros): banderas de un bit que indican el estado de la conexión, como iniciar, confirmar o cerrar la comunicación.</div>
           </details>
           <details><summary><span><span class="q-num">10</span>Servicio de DHCP</span><span class="chevron">▸</span></summary>
-            <div class="acc-body">Asigna automáticamente direcciones IP (y otros parámetros como gateway y DNS) a los equipos que se conectan a la red, evitando configurarlos a mano uno por uno. Funciona con un intercambio de cuatro mensajes: Discover, Offer, Request y Ack.</div>
+            <div class="acc-body">Asigna automáticamente direcciones IP (y otros parámetros como gateway y DNS) a los equipos que se conectan a la red, evitando configurarlos a mano uno por uno. Funciona con un intercambio de cuatro mensajes: Discover, Offer, Request y Ack.
+              <div class="mini-sim" id="dhcpWidget">
+                <div class="mini-row" id="dhcpRow">
+                  <div class="mini-node" data-mini="pc">PC nuevo</div>
+                  <div class="mini-line"></div>
+                  <div class="mini-node" data-mini="server">Servidor DHCP</div>
+                  <div class="mini-dot" id="dhcpDot"></div>
+                </div>
+                <div class="mini-controls"><button class="primary" id="dhcpBtn">Simular DHCP</button></div>
+                <div class="mini-log" id="dhcpLog">Tocá el botón para ver el handshake de 4 pasos.</div>
+              </div>
+            </div>
           </details>
           <details><summary><span><span class="q-num">11</span>Servicio de DNS</span><span class="chevron">▸</span></summary>
-            <div class="acc-body">Traduce nombres de dominio legibles (como un sitio web) a la dirección IP que realmente usan los equipos para comunicarse. Trabaja de forma jerárquica y distribuida entre servidores en vez de depender de uno solo.</div>
+            <div class="acc-body">Traduce nombres de dominio legibles (como un sitio web) a la dirección IP que realmente usan los equipos para comunicarse. Trabaja de forma jerárquica y distribuida entre servidores en vez de depender de uno solo.
+              <div class="mini-sim" id="dnsWidget">
+                <div class="mini-row" id="dnsRow">
+                  <div class="mini-node" data-mini="cliente">Cliente</div>
+                  <div class="mini-line"></div>
+                  <div class="mini-node" data-mini="raiz">Raíz "."</div>
+                  <div class="mini-line"></div>
+                  <div class="mini-node" data-mini="tld">TLD .com</div>
+                  <div class="mini-line"></div>
+                  <div class="mini-node" data-mini="auth">Autoritativo</div>
+                  <div class="mini-dot" id="dnsDot"></div>
+                </div>
+                <div class="mini-controls">
+                  <input type="text" id="dnsInput" class="mini-input" value="www.tp-redes.com">
+                  <button class="primary" id="dnsBtn">Resolver</button>
+                </div>
+                <div class="mini-log" id="dnsLog">Escribí un dominio y tocá Resolver.</div>
+              </div>
+            </div>
+          </details>
+          <details><summary><span><span class="q-num">16</span>Protocolo ARP</span><span class="chevron">▸</span></summary>
+            <div class="acc-body">Resuelve la dirección MAC que corresponde a una IP dentro de la misma red local: un equipo manda un broadcast preguntando "¿quién tiene esta IP?" y el dueño responde directamente con su MAC. El resultado queda guardado en una tabla ARP local por un rato, para no tener que volver a preguntar en cada paquete.
+              <div class="mini-sim" id="arpWidget">
+                <div class="mini-row" id="arpRow">
+                  <div class="mini-node" data-mini="a">PC A<br>sabe IP, no MAC</div>
+                  <div class="mini-line"></div>
+                  <div class="mini-node" data-mini="b">PC B · .20</div>
+                  <div class="mini-line"></div>
+                  <div class="mini-node" data-mini="c">PC C · .30</div>
+                  <div class="mini-dot" id="arpDot"></div>
+                </div>
+                <div class="mini-controls"><button class="primary" id="arpBtn">Resolver MAC de .20</button></div>
+                <div class="mini-log" id="arpLog">Tocá el botón para ver cómo A descubre la MAC de B.</div>
+              </div>
+            </div>
           </details>
           <details><summary><span><span class="q-num">12</span>Tecnologías Wireless y estándares</span><span class="chevron">▸</span></summary>
             <div class="acc-body">La familia IEEE 802.11 define el Wi-Fi, con variantes (a/b/g/n/ac/ax) que fueron subiendo velocidad y alcance. Bluetooth cubre distancias cortas entre dispositivos personales, y las redes celulares (3G/4G/5G) dan cobertura amplia para datos móviles.</div>
           </details>
           <details><summary><span><span class="q-num">14</span>Protocolo Spanning Tree</span><span class="chevron">▸</span></summary>
-            <div class="acc-body">Evita loops en redes con switches redundantes: detecta caminos duplicados entre switches y bloquea lógicamente los que sobran, dejando un solo camino activo, listo para activarse automáticamente si el principal falla.</div>
+            <div class="acc-body">Evita loops en redes con switches redundantes: detecta caminos duplicados entre switches y bloquea lógicamente los que sobran, dejando un solo camino activo, listo para activarse automáticamente si el principal falla.
+              <div class="mini-sim" id="stpWidget">
+                <svg viewBox="0 0 260 160" class="stp-svg">
+                  <line id="stpEdgeA" x1="130" y1="25" x2="40" y2="135" class="stp-edge"/>
+                  <line id="stpEdgeB" x1="130" y1="25" x2="220" y2="135" class="stp-edge"/>
+                  <line id="stpEdgeC" x1="40" y1="135" x2="220" y2="135" class="stp-edge"/>
+                  <circle id="stpDot" r="5" cx="130" cy="25"/>
+                  <g><circle cx="130" cy="25" r="22" class="stp-node"/><text x="130" y="29" class="stp-label">SW1</text></g>
+                  <g><circle cx="40" cy="135" r="22" class="stp-node"/><text x="40" y="139" class="stp-label">SW2</text></g>
+                  <g><circle cx="220" cy="135" r="22" class="stp-node"/><text x="220" y="139" class="stp-label">SW3</text></g>
+                </svg>
+                <div class="mini-controls">
+                  <button id="stpToggle">Activar Spanning Tree</button>
+                  <button class="primary" id="stpBroadcast">Enviar broadcast de prueba</button>
+                </div>
+                <div class="mini-log" id="stpLog">Sin STP, los tres switches forman un loop físico: probá el broadcast y mirá qué pasa.</div>
+              </div>
+            </div>
           </details>
           <details><summary><span><span class="q-num">20</span>NBL según Microsoft</span><span class="chevron">▸</span></summary>
             <div class="acc-body">Net Buffer List: la estructura que usa el stack de red de Windows (NDIS) para representar y mover paquetes de datos entre los distintos niveles del driver de red.</div>
@@ -362,6 +466,22 @@
       <div class="scenario-buttons" id="scenarioButtons"></div>
       <div class="scenario-result" id="scenarioResult">
         <p class="empty">← Elegí un escenario para ver qué enlace conviene y por qué.</p>
+      </div>
+
+      <div class="quiz-row">
+        <label>¿QUÉ PRIORIZÁS MÁS?</label>
+        <select id="linkPriority">
+          <option value="Económico">Costo</option>
+          <option value="Performance">Performance</option>
+          <option value="Mayor capacidad">Capacidad</option>
+          <option value="Config. de restricciones">Control / QoS</option>
+          <option value="Soporte a mayor distancia">Distancia</option>
+          <option value="Menor esfuerzo de config.">Facilidad de instalación</option>
+        </select>
+        <button class="primary" id="linkRecommendBtn">Recomendar enlace</button>
+      </div>
+      <div class="scenario-result" id="priorityResult">
+        <p class="empty">Elegí qué te importa más y te digo cuál gana en esa columna de la tabla de arriba.</p>
       </div>
     </div>
   </section>
@@ -542,6 +662,7 @@
   }
 
   function nodeCenter(n){
+    if(!n) return null;
     return { x: n.x + 63, y: n.y + 45 };
   }
 
@@ -652,8 +773,10 @@
   }
 
   function clearLab(){
+    cancelPacketAnim();
     [...nodes].forEach(n => removeNode(n.id));
     hostIpSeq = 10;
+    testResult.innerHTML = '<p class="empty">Armá al menos dos equipos, conectalos con cables y probá si se ven entre sí.</p>';
   }
 
   const EXAMPLES = {
@@ -823,57 +946,96 @@
     return null;
   }
 
+  function truncateAtNode(path, nodeId){
+    const idx = path.indexOf(nodeId);
+    return idx === -1 ? path : path.slice(0, idx + 1);
+  }
+
+  function flashBlockedNode(nodeId){
+    const el = nodeEls.get(nodeId);
+    if(!el) return;
+    el.classList.add('flash-blocked');
+    setTimeout(() => el.classList.remove('flash-blocked'), 700);
+  }
+
+  function sanitizePath(path){
+    if(!path) return null;
+    const clean = path.filter(id => nodes.some(n => n.id === id));
+    return clean.length === path.length ? clean : null;
+  }
+
   function runTest(){
-    const srcId = selSrc.value, dstId = selDst.value;
-    if(!srcId || !dstId || srcId === dstId){
-      showResult(false, 'Elegí dos equipos distintos', 'Origen y destino tienen que ser dispositivos diferentes.');
-      return;
-    }
-    const nodeSrc = nodes.find(n => n.id === srcId);
-    const nodeDst = nodes.find(n => n.id === dstId);
+    try {
+      const srcId = selSrc.value, dstId = selDst.value;
+      if(!srcId || !dstId || srcId === dstId){
+        showResult(false, 'Elegí dos equipos distintos', 'Origen y destino tienen que ser dispositivos diferentes.');
+        return;
+      }
+      const nodeSrc = nodes.find(n => n.id === srcId);
+      const nodeDst = nodes.find(n => n.id === dstId);
+      if(!nodeSrc || !nodeDst){
+        updateTestSelects();
+        showResult(false, 'Elegí origen y destino de nuevo', 'La lista se actualizó, volvé a elegir los dos equipos.');
+        return;
+      }
 
-    const physAdj = buildAdjacency(false);
-    const physPath = bfsSimple(physAdj, srcId, dstId);
-    if(!physPath){
-      showResult(false, 'Sin conexión física', 'No hay ningún cable, directo o indirecto, entre estos dos equipos. Conectalos con al menos un camino de cables.');
+      const physAdj = buildAdjacency(false);
+      const physPath = bfsSimple(physAdj, srcId, dstId);
+      if(!physPath){
+        showResult(false, 'Sin conexión física', 'No hay ningún cable, directo o indirecto, entre estos dos equipos. Conectalos con al menos un camino de cables.');
+        animateAlongPath(null, false);
+        flashBlockedNode(srcId);
+        return;
+      }
+
+      const needsRouter = !sameSubnet(nodeSrc.ip, nodeDst.ip);
+      const allowAdj = buildAdjacency(true);
+      const res = bfsRouterAware(allowAdj, srcId, dstId);
+
+      let ok, title, body, path;
+      if(needsRouter){
+        if(res.reachTrue){
+          ok = true; path = res.pathTrue;
+          title = 'Conectados';
+          body = `${nodeSrc.ip} y ${nodeDst.ip} están en subredes distintas, pero el camino pasa por un router que rutea el tráfico entre ellas.`;
+        } else if(res.reachFalse){
+          ok = false; path = null;
+          title = 'Cableados, pero sin ruta';
+          body = `${nodeSrc.ip} y ${nodeDst.ip} están en subredes distintas y el camino disponible no pasa por ningún router (o un firewall lo está bloqueando), así que el paquete ni siquiera sale: hace falta un router en el medio.`;
+        } else {
+          ok = false;
+          const fwId = firstBlockingFirewallInPath(physPath);
+          path = fwId ? truncateAtNode(physPath, fwId) : null;
+          title = 'Bloqueado';
+          body = fwId ? 'El único camino físico pasa por un firewall que está bloqueando el tráfico — el paquete se corta ahí. Apagalo o buscá otro camino.' : 'No hay ruta disponible entre estas dos IPs.';
+        }
+      } else {
+        if(res.reachTrue || res.reachFalse){
+          ok = true; path = res.reachFalse ? res.pathFalse : res.pathTrue;
+          title = 'Conectados';
+          body = `${nodeSrc.ip} y ${nodeDst.ip} están en la misma subred, así que no hace falta pasar por ningún router.`;
+        } else {
+          ok = false;
+          const fwId = firstBlockingFirewallInPath(physPath);
+          path = fwId ? truncateAtNode(physPath, fwId) : null;
+          title = 'Bloqueado';
+          body = 'Hay cable físico entre ellos, pero un firewall está bloqueando el único camino disponible — el paquete se corta ahí. Apagalo o buscá otro camino.';
+        }
+      }
+
+      path = sanitizePath(path);
+      showResult(ok, title, body);
+      if(path && path.length > 1){
+        animateAlongPath(path, ok);
+      } else {
+        animateAlongPath(null, false);
+        flashBlockedNode(srcId);
+      }
+    } catch(err){
+      console.error('Error en runTest:', err);
+      showResult(false, 'Ocurrió un error al calcular la conexión', 'Probá de nuevo — si vuelve a pasar, contame qué acabás de hacer antes de tocar "Probar conexión".');
       animateAlongPath(null, false);
-      return;
     }
-
-    const needsRouter = !sameSubnet(nodeSrc.ip, nodeDst.ip);
-    const allowAdj = buildAdjacency(true);
-    const res = bfsRouterAware(allowAdj, srcId, dstId);
-
-    let ok, title, body, path;
-    if(needsRouter){
-      if(res.reachTrue){
-        ok = true; path = res.pathTrue;
-        title = 'Conectados';
-        body = `${nodeSrc.ip} y ${nodeDst.ip} están en subredes distintas, pero el camino pasa por un router que rutea el tráfico entre ellas.`;
-      } else if(res.reachFalse){
-        ok = false; path = res.pathFalse;
-        title = 'Cableados, pero sin ruta';
-        body = `${nodeSrc.ip} y ${nodeDst.ip} están en subredes distintas y el camino disponible no pasa por ningún router (o un firewall lo está bloqueando). Agregá o reconectá un router en el medio.`;
-      } else {
-        ok = false; path = null;
-        const fwId = firstBlockingFirewallInPath(physPath);
-        title = 'Bloqueado';
-        body = fwId ? 'El único camino físico pasa por un firewall que está bloqueando el tráfico. Apagalo o buscá otro camino.' : 'No hay ruta disponible entre estas dos IPs.';
-      }
-    } else {
-      if(res.reachTrue || res.reachFalse){
-        ok = true; path = res.reachFalse ? res.pathFalse : res.pathTrue;
-        title = 'Conectados';
-        body = `${nodeSrc.ip} y ${nodeDst.ip} están en la misma subred, así que no hace falta pasar por ningún router.`;
-      } else {
-        ok = false; path = null;
-        title = 'Bloqueado';
-        body = 'Hay cable físico entre ellos, pero un firewall está bloqueando el único camino disponible. Apagalo o buscá otro camino.';
-      }
-    }
-
-    showResult(ok, title, body);
-    animateAlongPath(path || physPath, ok);
   }
 
   function showResult(ok, title, body){
@@ -881,15 +1043,26 @@
   }
 
   let animId = null;
-  function animateAlongPath(path, ok){
-    if(animId) cancelAnimationFrame(animId);
+
+  function cancelPacketAnim(){
+    if(animId){ cancelAnimationFrame(animId); animId = null; }
+    packetEl.classList.remove('visible');
     document.querySelectorAll('.node-chip').forEach(el => el.classList.remove('active-node'));
-    if(!path || path.length < 2){ packetEl.classList.remove('visible'); return; }
+    btnTest.disabled = nodes.filter(n => n.type==='pc' || n.type==='server').length < 2;
+  }
+
+  function animateAlongPath(path, ok){
+    cancelPacketAnim();
+    if(!path || path.length < 2) return;
+
+    const pts = path
+      .map(id => nodeCenter(nodes.find(n => n.id === id)))
+      .filter(Boolean);
+    if(pts.length < 2) return;
 
     packetEl.classList.toggle('blocked', !ok);
     packetEl.classList.add('visible');
 
-    const pts = path.map(id => nodeCenter(nodes.find(n => n.id === id)));
     const totalMs = 550 * (pts.length - 1);
     const start = performance.now();
 
@@ -908,8 +1081,16 @@
       const el = nodeEls.get(path[passedIdx]);
       if(el) el.classList.add('active-node');
 
-      if(t < 1){ animId = requestAnimationFrame(frame); }
-      else { setTimeout(() => packetEl.classList.remove('visible'), 300); }
+      if(t < 1){
+        animId = requestAnimationFrame(frame);
+      } else {
+        animId = null;
+        if(!ok) flashBlockedNode(path[path.length - 1]);
+        setTimeout(() => {
+          packetEl.classList.remove('visible');
+          updateTestSelects();
+        }, ok ? 300 : 550);
+      }
     }
     animId = requestAnimationFrame(frame);
   }
@@ -960,6 +1141,233 @@
       scenarioResult.innerHTML = `<div class="detail-title">Enlace recomendado: ${s.choice}</div><div class="detail-body">${s.why}</div>`;
     });
     scenarioButtons.appendChild(btn);
+  });
+
+  // -------- recomendador por prioridad --------
+  const linkTypes = ["MPLS","LAN to LAN","Microondas","VSAT","Fibra dedicada","Celular 4G/5G"];
+  document.getElementById('linkRecommendBtn').addEventListener('click', () => {
+    const crit = document.getElementById('linkPriority').value;
+    const row = rankRows.find(r => r.crit === crit);
+    const idx = row.ranks.indexOf(1);
+    const link = linkTypes[idx];
+    const priorityResult = document.getElementById('priorityResult');
+    priorityResult.innerHTML = `<div class="detail-title">Con esa prioridad, conviene: ${link}</div><div class="detail-body">Es el que mejor rankea en "${crit}" según la tabla de arriba (puesto 1 de 6). Fijate en la fila correspondiente si algún otro enlace le queda cerca, por si el segundo puesto te sirve más por otro motivo.</div>`;
+  });
+
+  // ============================================================
+  // MINI-SIMULACIONES DEL ACORDEÓN (DHCP · DNS · ARP · STP)
+  // ============================================================
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  function placeDotAt(dot, el){
+    const x = el.offsetLeft + el.offsetWidth/2;
+    const y = el.offsetTop + el.offsetHeight/2;
+    dot.style.left = (x - 4.5) + 'px';
+    dot.style.top = (y - 4.5) + 'px';
+  }
+
+  function moveDot(dot, fromEl, toEl, ms){
+    return new Promise(resolve => {
+      const ax = fromEl.offsetLeft + fromEl.offsetWidth/2, ay = fromEl.offsetTop + fromEl.offsetHeight/2;
+      const bx = toEl.offsetLeft + toEl.offsetWidth/2, by = toEl.offsetTop + toEl.offsetHeight/2;
+      dot.classList.add('visible');
+      const start = performance.now();
+      function frame(now){
+        const t = Math.min((now - start) / ms, 1);
+        dot.style.left = (ax + (bx - ax) * t - 4.5) + 'px';
+        dot.style.top = (ay + (by - ay) * t - 4.5) + 'px';
+        if(t < 1){ requestAnimationFrame(frame); } else { resolve(); }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  // ---- DHCP ----
+  async function playDHCP(){
+    const row = document.getElementById('dhcpRow');
+    const dot = document.getElementById('dhcpDot');
+    const pc = row.querySelector('[data-mini="pc"]');
+    const srv = row.querySelector('[data-mini="server"]');
+    const logEl = document.getElementById('dhcpLog');
+    const btn = document.getElementById('dhcpBtn');
+    btn.disabled = true;
+    [pc, srv].forEach(n => n.classList.remove('hit'));
+    placeDotAt(dot, pc);
+    logEl.textContent = 'PC nuevo se conecta sin IP asignada.';
+    await sleep(1000);
+    pc.classList.add('hit');
+    logEl.innerHTML = '<span>DISCOVER →</span> el PC manda un broadcast: "¿hay algún servidor DHCP?"';
+    await sleep(1000);
+    await moveDot(dot, pc, srv, 900);
+    pc.classList.remove('hit'); srv.classList.add('hit');
+    logEl.innerHTML = '<span>OFFER →</span> el servidor responde ofreciendo una IP libre.';
+    await sleep(1200);
+    await moveDot(dot, srv, pc, 900);
+    srv.classList.remove('hit'); pc.classList.add('hit');
+    logEl.innerHTML = '<span>REQUEST →</span> el PC pide formalmente esa IP.';
+    await sleep(1200);
+    await moveDot(dot, pc, srv, 900);
+    pc.classList.remove('hit'); srv.classList.add('hit');
+    const ip = '192.168.1.' + (50 + Math.floor(Math.random()*40));
+    logEl.innerHTML = `<span>ACK →</span> el servidor confirma. <span class="ip-result">IP asignada: ${ip}</span>`;
+    await sleep(1200);
+    await moveDot(dot, srv, pc, 900);
+    srv.classList.remove('hit');
+    await sleep(600);
+    dot.classList.remove('visible');
+    btn.disabled = false;
+  }
+  document.getElementById('dhcpBtn').addEventListener('click', playDHCP);
+
+  // ---- DNS ----
+  function fakeIpFromDomain(domain){
+    let h = 0;
+    for(let i = 0; i < domain.length; i++){ h = (h * 31 + domain.charCodeAt(i)) >>> 0; }
+    return `${104 + (h % 40)}.${(h >>> 3) % 223 + 1}.${(h >>> 7) % 223 + 1}.${(h >>> 11) % 254 + 1}`;
+  }
+  async function playDNS(){
+    const row = document.getElementById('dnsRow');
+    const dot = document.getElementById('dnsDot');
+    const n = {
+      cliente: row.querySelector('[data-mini="cliente"]'),
+      raiz: row.querySelector('[data-mini="raiz"]'),
+      tld: row.querySelector('[data-mini="tld"]'),
+      auth: row.querySelector('[data-mini="auth"]'),
+    };
+    const logEl = document.getElementById('dnsLog');
+    const btn = document.getElementById('dnsBtn');
+    const domain = (document.getElementById('dnsInput').value || 'www.tp-redes.com').trim();
+    btn.disabled = true;
+    Object.values(n).forEach(el => el.classList.remove('hit'));
+    placeDotAt(dot, n.cliente);
+    logEl.textContent = `Resolviendo ${domain}...`;
+    await sleep(900);
+    const hops = [
+      [n.cliente, n.raiz, '¿Quién sabe de .com?'],
+      [n.raiz, n.tld, 'Preguntale al servidor de .com'],
+      [n.tld, n.auth, `Preguntale al autoritativo de ${domain.split('.').slice(-2).join('.')}`],
+    ];
+    for(const [from, to, msg] of hops){
+      from.classList.remove('hit');
+      logEl.innerHTML = `<span>→</span> ${msg}`;
+      await sleep(1000);
+      await moveDot(dot, from, to, 900);
+      to.classList.add('hit');
+      await sleep(500);
+    }
+    const ip = fakeIpFromDomain(domain);
+    logEl.innerHTML = `<span>←</span> el autoritativo responde. <span class="ip-result">${domain} = ${ip}</span>`;
+    await sleep(1000);
+    await moveDot(dot, n.auth, n.cliente, 1100);
+    await sleep(500);
+    Object.values(n).forEach(el => el.classList.remove('hit'));
+    dot.classList.remove('visible');
+    btn.disabled = false;
+  }
+  document.getElementById('dnsBtn').addEventListener('click', playDNS);
+
+  // ---- ARP ----
+  async function playARP(){
+    const row = document.getElementById('arpRow');
+    const dot = document.getElementById('arpDot');
+    const a = row.querySelector('[data-mini="a"]'), b = row.querySelector('[data-mini="b"]'), c = row.querySelector('[data-mini="c"]');
+    const logEl = document.getElementById('arpLog');
+    const btn = document.getElementById('arpBtn');
+    btn.disabled = true;
+    [a,b,c].forEach(el => el.classList.remove('hit'));
+    placeDotAt(dot, a);
+    logEl.innerHTML = '<span>ARP Request →</span> A manda un broadcast: "¿quién tiene la .20?"';
+    await sleep(1100);
+    await moveDot(dot, a, b, 800);
+    b.classList.add('hit');
+    await sleep(500);
+    await moveDot(dot, b, c, 800);
+    c.classList.add('hit');
+    logEl.innerHTML += '<br>C recibe el broadcast, revisa: no es su IP, lo descarta.';
+    await sleep(1300);
+    c.classList.remove('hit');
+    placeDotAt(dot, b);
+    const mac = 'AA:BB:CC:' + [1,2,3].map(() => Math.floor(Math.random()*256).toString(16).padStart(2,'0').toUpperCase()).join(':');
+    logEl.innerHTML = `<span>ARP Reply →</span> B reconoce su IP y responde directo a A. <span class="ip-result">MAC de B: ${mac}</span>`;
+    await sleep(1100);
+    await moveDot(dot, b, a, 900);
+    await sleep(600);
+    [a,b,c].forEach(el => el.classList.remove('hit'));
+    dot.classList.remove('visible');
+    btn.disabled = false;
+  }
+  document.getElementById('arpBtn').addEventListener('click', playARP);
+
+  // ---- Spanning Tree ----
+  let stpEnabled = false;
+  const stpEdgeC = document.getElementById('stpEdgeC');
+  const stpLog = document.getElementById('stpLog');
+  const stpToggleBtn = document.getElementById('stpToggle');
+  const stpBroadcastBtn = document.getElementById('stpBroadcast');
+  const stpDot = document.getElementById('stpDot');
+  const stpPoints = {
+    sw1: {x:130, y:25}, sw2: {x:40, y:135}, sw3: {x:220, y:135},
+  };
+
+  function stpMoveDot(fromKey, toKey, ms){
+    return new Promise(resolve => {
+      const a = stpPoints[fromKey], b = stpPoints[toKey];
+      stpDot.classList.add('visible');
+      const start = performance.now();
+      function frame(now){
+        const t = Math.min((now - start) / ms, 1);
+        stpDot.setAttribute('cx', a.x + (b.x - a.x) * t);
+        stpDot.setAttribute('cy', a.y + (b.y - a.y) * t);
+        if(t < 1){ requestAnimationFrame(frame); } else { resolve(); }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  stpToggleBtn.addEventListener('click', () => {
+    stpEnabled = !stpEnabled;
+    stpEdgeC.classList.toggle('blocked', stpEnabled);
+    stpToggleBtn.textContent = stpEnabled ? 'Desactivar Spanning Tree' : 'Activar Spanning Tree';
+    stpLog.textContent = stpEnabled
+      ? 'STP activo: el enlace entre SW2 y SW3 queda bloqueado para cortar el loop.'
+      : 'STP desactivado: los tres switches vuelven a formar un loop físico.';
+  });
+
+  stpBroadcastBtn.addEventListener('click', async () => {
+    stpBroadcastBtn.disabled = true; stpToggleBtn.disabled = true;
+    if(stpEnabled){
+      stpLog.textContent = 'Sin loop: el broadcast llega una vez a cada switch y no vuelve a circular.';
+      await sleep(800);
+      await stpMoveDot('sw1','sw2', 750);
+      await stpMoveDot('sw2','sw1', 600);
+      await stpMoveDot('sw1','sw3', 750);
+      stpDot.classList.remove('visible');
+      await sleep(300);
+      stpLog.textContent = 'Listo: con el puerto SW2–SW3 bloqueado, el broadcast no dio ninguna vuelta.';
+    } else {
+      stpLog.textContent = '¡Tormenta de broadcast! Sin STP el mensaje da vueltas sin parar.';
+      await sleep(800);
+      for(let lap = 0; lap < 2; lap++){
+        await stpMoveDot('sw1','sw2', 600);
+        await stpMoveDot('sw2','sw3', 600);
+        await stpMoveDot('sw3','sw1', 600);
+      }
+      stpDot.classList.remove('visible');
+      await sleep(300);
+      stpLog.textContent = 'Ese loop infinito satura la red — para eso existe Spanning Tree.';
+    }
+    stpBroadcastBtn.disabled = false; stpToggleBtn.disabled = false;
+  });
+
+  // ---- Acordeón: que solo quede uno abierto a la vez ----
+  document.querySelectorAll('.accordion-shell details').forEach(det => {
+    det.addEventListener('toggle', () => {
+      if(det.open){
+        document.querySelectorAll('.accordion-shell details').forEach(other => {
+          if(other !== det) other.open = false;
+        });
+      }
+    });
   });
 })();
 </script>

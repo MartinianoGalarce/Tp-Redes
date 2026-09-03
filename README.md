@@ -18,7 +18,7 @@ https://martinianogalarce.github.io/Tp-Redes/tp_gp.html
 3. Branch: `main` (o la que uses) / carpeta `/root`
 4. Guardar. A los 1-2 minutos queda publicado en la URL de arriba.
 
-## 💻 Verlo local
+##  Verlo local
 
 No necesita servidor ni puerto, es un HTML plano:
 
@@ -29,7 +29,7 @@ Si preferís usar VS Code, con la extensión **Live Server** también funciona: 
 
 > Nota: las tipografías (Space Grotesk, JetBrains Mono) se cargan desde Google Fonts, así que hace falta conexión a internet la primera vez para que se vea con el estilo completo. Sin conexión, cae a una fuente del sistema pero todo sigue funcionando igual.
 
-## 📋 Qué contiene
+##  Qué contiene
 
 | Sección | Qué muestra | Preguntas del TP |
 |---|---|---|
@@ -38,7 +38,7 @@ Si preferís usar VS Code, con la extensión **Live Server** también funciona: 
 | **3. Elegí el enlace** | Tabla de ranking de 6 tipos de enlace WAN por 6 criterios, más 3 escenarios con la recomendación justificada. | 21 |
 | **4. Nuestra experiencia con redes** | Tarjetas editables, una por integrante, para completar la respuesta individual. | 33 |
 
-## 🧪 Cómo usar el laboratorio (sección 1)
+##  Cómo usar el laboratorio (sección 1)
 
 1. Agregá dispositivos con los botones de arriba (`+ PC`, `+ Switch`, etc.)
 2. Arrastralos para acomodarlos donde quieras
@@ -48,11 +48,7 @@ Si preferís usar VS Code, con la extensión **Live Server** también funciona: 
 
 Simplificaciones a propósito (para no complicar la herramienta): switch y router no tienen IP propia, solo reenvían/rutean. Dos IPs de subredes distintas necesitan un router en el camino para verse. Un firewall en modo "bloqueando" corta cualquier ruta que pase por él.
 
-## ✏️ Antes de entregar
 
-- Completá la sección 4 con el nombre y la experiencia en redes de cada integrante (no se guarda solo, copiá el texto final antes de cerrar la pestaña)
-- Repasá el acordeón de la sección 2 por si alguna respuesta la quieren ampliar con sus propias palabras
-
-## 🛠️ Stack
+##  Stack
 
 HTML + CSS + JavaScript vanilla, un solo archivo, sin build ni dependencias instalables.

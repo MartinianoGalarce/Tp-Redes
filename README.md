@@ -43,6 +43,8 @@ Si preferís usar VS Code, con la extensión **Live Server** también funciona: 
 
 Simplificaciones a propósito (para no complicar la herramienta): switch y router no tienen IP propia, solo reenvían/rutean. Dos IPs de subredes distintas necesitan un router en el camino para verse. Un firewall en modo "bloqueando" corta cualquier ruta que pase por él.
 
+"apretar varias veces en probar hasta que haga el recorrido, un bug que no pudimos resolver"
+
 
 ##  Stack
 

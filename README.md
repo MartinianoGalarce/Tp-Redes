@@ -4,6 +4,8 @@ Trabajo práctico teórico de la materia **Programación sobre Redes**, presenta
 
 Es un único archivo HTML (`tp-redes-interactivo.html`), sin dependencias ni instalación: se abre directo en el navegador.
 
+El contenido interactivo funciona como complemento al trabajo de investigacion escrito al que se puede acceder al final de la pagina.
+
 ##  Verlo online (recomendado)
 
 Si este repo tiene GitHub Pages activado, entrás directo desde:

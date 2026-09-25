@@ -52,3 +52,7 @@ Simplificaciones a propósito (para no complicar la herramienta): switch y route
 ##  Stack
 
 HTML + CSS + JavaScript vanilla, un solo archivo, sin build ni dependencias instalables.
+
+PDF con cuestionario resuelto 
+[TP Teórico Redes - IFTS N° 18 .pdf](https://github.com/user-attachments/files/32660250/TP.Teorico.Redes.-.IFTS.N.18.pdf)
+

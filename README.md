@@ -12,11 +12,6 @@ Si este repo tiene GitHub Pages activado, entrás directo desde:
 https://martinianogalarce.github.io/Tp-Redes/tp_gp.html
 ```
 
-**¿Cómo se activa GitHub Pages?** (lo hace cualquiera de los del grupo, una sola vez)
-1. En el repo de GitHub: **Settings → Pages**
-2. En "Build and deployment" → Source: **Deploy from a branch**
-3. Branch: `main` (o la que uses) / carpeta `/root`
-4. Guardar. A los 1-2 minutos queda publicado en la URL de arriba.
 
 ##  Verlo local
 
